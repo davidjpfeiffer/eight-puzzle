@@ -73,7 +73,7 @@ public:
         newBoardState[i] = boardState[i];
       }
 
-      Board * newBoard = new Board(newBoardState);
+      Board *newBoard = new Board(newBoardState);
       newBoard->makeMove(move);
       return newBoard;
     }
@@ -171,11 +171,6 @@ public:
     return boardState[index];
   }
 
-  static const int boardSize = 9;
-
-private:
-  int *boardState;
-
   static int *getSolvedBoardState()
   {
     int *newBoardState = new int[boardSize];
@@ -187,6 +182,11 @@ private:
 
     return newBoardState;
   }
+
+  static const int boardSize = 9;
+
+private:
+  int *boardState;
 };
 
 #endif

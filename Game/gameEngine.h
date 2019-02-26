@@ -37,7 +37,7 @@ private:
     {
       rootNode = Node::createRootNode(board, settings.algorithm);
       generateTree(rootNode);
-      Node *solutionNode = getSolutionNode(rootNode);
+      Node *solutionNode = getBestSolutionNode(rootNode);
 
       if (solutionNode != nullptr)
       {
@@ -86,19 +86,47 @@ private:
     }
   }
 
-  Node *getSolutionNode(Node *rootNode)
+  Node *getBestSolutionNode(Node *rootNode)
+  {
+    std::vector<Node *> solutionNodes = getSolutionNodes(rootNode);
+    Node * bestSolutionNode = nullptr;
+
+    for (int i = 0; i < solutionNodes.size(); i++)
+    {
+      if (solutionNodes[i]->value == 0)
+      {
+        if (bestSolutionNode == nullptr)
+        {
+          bestSolutionNode = solutionNodes[i];
+        }
+        else
+        {
+          if (solutionNodes[i]->depth < bestSolutionNode->depth)
+          {
+            bestSolutionNode = solutionNodes[i];
+          }
+        }
+
+      }
+    }
+
+    return bestSolutionNode;
+  }
+
+  std::vector<Node *> getSolutionNodes(Node *rootNode)
   {
     std::vector<Node *> children = getChildren(rootNode);
+    std::vector<Node *> solutionNodes;
 
     for (int i = 1; i < children.size(); i++)
     {
       if (children[i]->value == 0)
       {
-        return children[i];
+        solutionNodes.push_back(children[i]);
       }
     }
 
-    return nullptr;
+    return solutionNodes;
   }
 
   std::vector<Node *> getChildren(Node *node)
@@ -167,7 +195,11 @@ private:
           Node *newNode = new Node(value, theoreticalBoard, theoreticalMove, node);
           int newNodeId = newNode->getId();
 
-          if (memory[newNodeId])
+          if (newNodeId == Node::SOLUTION_ID)
+          {
+            node->children.push_back(newNode);
+          }
+          else if (memory[newNodeId])
           {
             delete newNode;
           }

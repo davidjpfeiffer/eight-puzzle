@@ -6,7 +6,7 @@
 struct GameEngineSettings
 {
   int numberOfGames = 20;
-  int difficulty = 500;
+  int difficulty = 1000;
   bool showMoves = false;
   Algorithm * algorithm = &algorithmRegistry.manhattanDistanceAlgorithm;
 } gameEngineSettings;

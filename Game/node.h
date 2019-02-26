@@ -2,10 +2,10 @@
 #define __NODE
 
 #include <vector>
-#include <cmath>
 
 #include "./board.h"
 #include "./algorithm.h"
+#include "../Helpers/mathService.h"
 
 class Node
 {
@@ -47,15 +47,16 @@ public:
   {
     int id = 0;
 
-    for (int i = 0; i < 9; i++)
+    for (int i = 0; i < Board::boardSize; i++)
     {
-      id += (*board)[i] * std::pow(10, i);
+      id += (*board)[i] * MathService::pow(10, Board::boardSize - i - 1);
     }
 
     return id;
   }
 
   int value, depth, move;
+  static const int SOLUTION_ID = 12345678;
   Board *board;
   Node *parent;
   std::vector<Node *> children;
