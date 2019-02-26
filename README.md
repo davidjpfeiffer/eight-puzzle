@@ -19,6 +19,16 @@ You can configure the settings for the game engine by modifying the `gameEngineS
 - Whether to show the step-by-step moves for each solution
 - Which algorithm should be used as a heuristic to find a solution
 
+### How It Works
+
+The algorithms use heuristics to quantify how good or bad a given game state is; smaller values indicate that a game state is almost solved, while larger values indicate that a game state is no where near being solved.
+
+The game engine starts with a game state that needs to be solved. The engine recursively calculates the valid moves from the current game state to subsequent game states effectively building a tree of all possible game states.
+
+Duplicate game states are not considered, an optimization which allows us to use an exhaustive search. This optimization is implemented using a map which keeps track of which games states have already been visited.
+
+The solution state is then found within the tree and a path from the root node to the solution node can be easily found; this path represents the moves that must be made to transform the initial game state to the solved game state.
+
 ### Running Results
 
 ![Unable to load image](https://github.com/davidjpfeiffer/eight-puzzle/blob/master/Screenshots/running-results-multiple.PNG "Running Results for Multiple Games")
