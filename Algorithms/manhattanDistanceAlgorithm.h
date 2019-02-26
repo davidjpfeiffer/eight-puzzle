@@ -5,7 +5,7 @@
 #include <math.h>
 #include <cmath>
 
-#include "../algorithm.h"
+#include "../Game/algorithm.h"
 
 class ManhattanDistanceAlgorithm: public Algorithm
 {

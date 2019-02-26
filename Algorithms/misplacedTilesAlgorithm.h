@@ -1,7 +1,7 @@
 #ifndef __MISPLACED_TILES_ALGORITHM
 #define __MISPLACED_TILES_ALGORITHM
 
-#include "../algorithm.h"
+#include "../Game/algorithm.h"
 
 class MisplacedTilesAlgorithm: public Algorithm
 {

@@ -1,7 +1,7 @@
 #ifndef __GAME_ENGINE_SETTINGS
 #define __GAME_ENGINE_SETTINGS
 
-#include "./Algorithms/algorithmRegistry.h"
+#include "../Algorithms/algorithmRegistry.h"
 
 struct GameEngineSettings
 {

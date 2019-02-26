@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 #include "./invalidMoveException.h"
-#include "./randomService.h"
+#include "../Helpers/randomService.h"
 
 class Board
 {
