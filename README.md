@@ -17,7 +17,7 @@ You can configure the settings for the game engine by modifying the `gameEngineS
 - Number of games to be played
 - The difficulty of the boards to be solved (more difficult boards require more moves to solve)
 - Whether to show the step-by-step moves for each solution
-- Which algorthm should be used as a heuristic to find a solution
+- Which algorithm should be used as a heuristic to find a solution
 
 ### Running Results
 
