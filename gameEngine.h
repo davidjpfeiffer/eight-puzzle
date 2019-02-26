@@ -5,145 +5,113 @@
 #include <string>
 #include <map>
 
+#include "./gameEngineSettings.h"
 #include "./board.h"
 #include "./algorithm.h"
-#include "./searchTree.h"
+#include "./node.h"
 
 class GameEngine
 {
 public:
-  bool executeAlgorithm(Algorithm *algorithm)
+  GameEngine(GameEngineSettings _settings)
   {
-    int iterations = 0;
-    memory.clear();
-    Board *board = Board::getRandomBoard(500);
+    settings = _settings;
+  }
 
-    try
+  void play()
+  {
+    for (int game = 1; game <= settings.numberOfGames; game++)
     {
-      SearchTreeNode *rootNode = new SearchTreeNode(algorithm->quantifyBoardState(board), board, -1, nullptr);
-      memory[rootNode->getId()]++;
-      SearchTreeNode *currentNode = rootNode;
-
-      while (currentNode->board->isSolved() == false)
-      {
-        generateNodesForLookAheadMoves(currentNode, algorithm);
-        SearchTreeNode *bestLeaf = getBestChild(currentNode);
-
-        if (bestLeaf == currentNode)
-        {
-          if (currentNode == rootNode)
-          {
-            log("This should only happen when the board is unsolvable.", true);
-            return false;
-          }
-
-          log("Initiating backtrack procedure.");
-          currentNode->avoid = true;
-          currentNode = currentNode->parent;
-        }
-        else if (*bestLeaf == *currentNode) // might be able to get rid of this check
-        {
-          log("Initiating avoidance procedure.");
-          bestLeaf->avoid = true;
-          currentNode = currentNode->parent;
-        }
-        else
-        {
-          currentNode = bestLeaf;
-        }
-
-        iterations++;
-
-        if (iterations >= maxIterations)
-        {
-          log("Unable to solve this puzzle. I got overwhelmed.", true);
-          return false;
-        }
-      }
-
-      printSolution(rootNode, currentNode, iterations);
-      return true;
-    }
-    catch (std::bad_alloc)
-    {
-      log("Need more RAM to solve this particular puzzle.", true);
-      return false;
-    }
-    catch (std::exception e)
-    {
-      log("Something went wrong. Unable to solve puzzle.", true);
-      log(e.what(), true);
-      return false;
+      Board *randomBoard = Board::getRandomBoard(settings.difficulty);
+      solveBoard(randomBoard);
     }
   }
 
 private:
-  void printSolution(SearchTreeNode *rootNode, SearchTreeNode *solvedNode, int iterations)
+  void solveBoard(Board *board)
   {
-    std::vector<SearchTreeNode *> path;
-    SearchTreeNode *current = solvedNode;
+    memory.clear();
+    Node *rootNode;
 
-    while (current != rootNode)
+    try
     {
-      path.insert(path.begin(), current);
-      current = current->parent;
+      rootNode = Node::createRootNode(board, settings.algorithm);
+      generateTree(rootNode);
+      Node *solutionNode = getSolutionNode(rootNode);
+
+      if (solutionNode != nullptr)
+      {
+        printSolution(rootNode, solutionNode);
+      }
+      else
+      {
+        std::cout << "Unable to solve this puzzle.\n";
+      }
+    }
+    catch (std::bad_alloc)
+    {
+      std::cout << "Need more RAM to solve this particular puzzle.\n";
+    }
+    catch (std::exception e)
+    {
+      std::cout << "Something went wrong. Unable to solve puzzle.\n";
+      std::cout << e.what() << '\n';
     }
 
-    path.insert(path.begin(), rootNode);
+    delete rootNode;
+    rootNode = nullptr;
+  }
 
-    std::cout << "Solved puzzle in " << path.size() << " moves using " << iterations << " iteration(s).\n";
+  void printSolution(Node *rootNode, Node *solutionNode)
+  {
+    std::cout << "Solved puzzle in " << solutionNode->depth << " moves.\n";
 
-    for (int i = 0; i < path.size(); i++)
+    if (settings.showMoves)
     {
-      // path[i]->board->print();
+      std::vector<Node *> path;
+      Node *current = solutionNode;
+
+      while (current != rootNode)
+      {
+        path.insert(path.begin(), current);
+        current = current->parent;
+      }
+
+      path.insert(path.begin(), rootNode);
+
+      for (int i = 0; i < path.size(); i++)
+      {
+        path[i]->board->print();
+      }
     }
   }
 
-  SearchTreeNode *getFirstNotAvoided(std::vector<SearchTreeNode *> nodes)
+  Node *getSolutionNode(Node *rootNode)
   {
-    for (int i = 0; i < nodes.size(); i++)
+    std::vector<Node *> children = getChildren(rootNode);
+
+    for (int i = 1; i < children.size(); i++)
     {
-      if (nodes[i]->avoid == false)
+      if (children[i]->value == 0)
       {
-        return nodes[i];
+        return children[i];
       }
     }
 
     return nullptr;
   }
 
-  SearchTreeNode *getBestChild(SearchTreeNode *node)
+  std::vector<Node *> getChildren(Node *node)
   {
-    std::vector<SearchTreeNode *> children = getChildren(node);
-    SearchTreeNode *best = getFirstNotAvoided(children);
-
-    if (best == nullptr)
-    {
-      return node;
-    }
-
-    for (int i = 1; i < children.size(); i++)
-    {
-      if (children[i]->value < best->value && children[i]->avoid == false)
-      {
-        best = children[i];
-      }
-    }
-
-    return best;
-  }
-
-  std::vector<SearchTreeNode *> getChildren(SearchTreeNode *node)
-  {
-    std::vector<SearchTreeNode *> results;
+    std::vector<Node *> results;
 
     if (node->children.size() > 0)
     {
       for (int i = 0; i < node->children.size(); i++)
       {
-        SearchTreeNode *child = node->children[i];
+        Node *child = node->children[i];
         results.push_back(child);
-        std::vector<SearchTreeNode *> childResults = getChildren(child);
+        std::vector<Node *> childResults = getChildren(child);
 
         for (int j = 0; j < childResults.size(); j++)
         {
@@ -155,38 +123,34 @@ private:
     return results;
   }
 
-  void generateNodesForLookAheadMoves(SearchTreeNode *node, Algorithm *algorithm)
+  void generateTree(Node *rootNode)
   {
-    generateChildNodes(node, algorithm);
+    memory[rootNode->getId()] = true;
+    generateChildNodes(rootNode);
     bool solutionFound = false;
 
-    std::vector<SearchTreeNode *> children = node->children;
+    std::vector<Node *> children = rootNode->children;
 
     while (children.size() > 0)
     {
-      std::vector<SearchTreeNode *> newChildren;
+      std::vector<Node *> newChildren;
 
       for (int i = 0; i < children.size(); i++)
       {
-        solutionFound = generateChildNodes(children[i], algorithm);
+        generateChildNodes(children[i]);
 
         for (int j = 0; j < children[i]->children.size(); j++)
         {
           newChildren.push_back(children[i]->children[j]);
         }
-
-        if (solutionFound)
-        {
-          return;
-        }
       }
 
-      children = std::vector<SearchTreeNode *>(newChildren); // try children = newChildren
+      children = newChildren;
       newChildren.clear();
     }
   }
 
-  bool generateChildNodes(SearchTreeNode *node, Algorithm *algorithm)
+  void generateChildNodes(Node *node)
   {
     if (node->children.size() == 0)
     {
@@ -199,38 +163,26 @@ private:
         if (node->parent == nullptr || theoreticalMove != node->parent->move)
         {
           Board *theoreticalBoard = node->board->getBoardAfterMove(theoreticalMove);
-          int value = algorithm->quantifyBoardState(theoreticalBoard);
-          SearchTreeNode *newNode = new SearchTreeNode(value, theoreticalBoard, theoreticalMove, node);
+          int value = settings.algorithm->quantifyBoardState(theoreticalBoard);
+          Node *newNode = new Node(value, theoreticalBoard, theoreticalMove, node);
           int newNodeId = newNode->getId();
 
-          if (memory[newNodeId] == 0)
-          {
-            memory[newNodeId]++;
-            node->children.push_back(newNode);
-          }
-          else
+          if (memory[newNodeId])
           {
             delete newNode;
           }
-
-          if (value == 0)
+          else
           {
-            return true;
+            memory[newNodeId] = true;
+            node->children.push_back(newNode);
           }
         }
       }
     }
-
-    return false;
   }
 
-  void log(std::string message, bool important = false)
-  {
-    std::cout << message << '\n';
-  }
-
-  int maxIterations = 100000;
-  std::map<int, int> memory;
+  GameEngineSettings settings;
+  std::map<int, bool> memory;
 };
 
 #endif

@@ -19,7 +19,7 @@ public:
 
   Board(const Board &board)
   {
-    boardState = getDesiredBoardState();
+    boardState = getSolvedBoardState();
 
     for (int i = 0; i < boardSize; i++)
     {
@@ -40,14 +40,13 @@ public:
     std::cout << std::endl;
   }
 
-  static Board *getRandomBoard(int randomMovesToMake)
+  static Board *getRandomBoard(int difficulty)
   {
-    Board *newBoardState = new Board(getDesiredBoardState());
+    Board *newBoardState = new Board(getSolvedBoardState());
     int previousMove = -1;
 
-    for (int i = 0; i < randomMovesToMake; i++)
+    for (int i = 0; i < difficulty; i++)
     {
-
       std::vector<int> moves = newBoardState->getValidMoves(true);
       int randomMove = moves[randomService.getRandomNumber(0, moves.size() - 1)];
 
@@ -74,11 +73,9 @@ public:
         newBoardState[i] = boardState[i];
       }
 
-      int emptySlotIndex = getEmptySlotIndex();
-      int temp = newBoardState[emptySlotIndex];
-      newBoardState[emptySlotIndex] = newBoardState[move];
-      newBoardState[move] = temp; // temp will always be 0
-      return new Board(newBoardState);
+      Board * newBoard = new Board(newBoardState);
+      newBoard->makeMove(move);
+      return newBoard;
     }
     else
     {
@@ -90,10 +87,8 @@ public:
   {
     if (isValidMove(move) || allowInvalidMove)
     {
-      int emptySlotIndex = getEmptySlotIndex();
-      int temp = boardState[emptySlotIndex];
-      boardState[emptySlotIndex] = boardState[move];
-      boardState[move] = temp; // temp will always be 0
+      boardState[getEmptySlotIndex()] = boardState[move];
+      boardState[move] = 0;
     }
     else
     {
@@ -176,22 +171,12 @@ public:
     return boardState[index];
   }
 
-  static bool isSolvable(int *board)
-  {
-    return getInversions(board) % 2 == 0;
-  }
-
-  static bool isSolvable(Board *board)
-  {
-    return getInversions(board) % 2 == 0;
-  }
-
   static const int boardSize = 9;
 
 private:
   int *boardState;
 
-  static int *getDesiredBoardState()
+  static int *getSolvedBoardState()
   {
     int *newBoardState = new int[boardSize];
 
@@ -201,52 +186,6 @@ private:
     }
 
     return newBoardState;
-  }
-
-  static int getInversions(int *board)
-  {
-    int inversions = 0;
-
-    for (int i = 0; i < boardSize; i++)
-    {
-      int value = board[i];
-
-      if (value != 0)
-      {
-        for (int j = i + 1; j < boardSize; j++)
-        {
-          if (board[j] < board[i])
-          {
-            inversions++;
-          }
-        }
-      }
-    }
-
-    return inversions;
-  }
-
-  static int getInversions(Board *board)
-  {
-    int inversions = 0;
-
-    for (int i = 0; i < boardSize; i++)
-    {
-      int value = (*board)[i];
-
-      if (value != 0)
-      {
-        for (int j = i + 1; j < boardSize; j++)
-        {
-          if ((*board)[j] < (*board)[i])
-          {
-            inversions++;
-          }
-        }
-      }
-    }
-
-    return inversions;
   }
 };
 
